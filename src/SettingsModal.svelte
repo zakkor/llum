@@ -47,11 +47,13 @@
 
 	async function onAPIKeyUpdate() {
 		dispatch('fetchModels');
-		await sendSingleItem($syncServer.address, $syncServer.token, {
-			conversation: null,
-			message: null,
-			apiKeys: getAPIKeysAsObject(),
-		});
+		if ($syncServer.token && $syncServer.password) {
+			await sendSingleItem($syncServer.address, $syncServer.token, {
+				conversation: null,
+				message: null,
+				apiKeys: getAPIKeysAsObject(),
+			});
+		}
 	}
 </script>
 
