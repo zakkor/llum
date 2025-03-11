@@ -97,8 +97,8 @@
 							<Icon
 								icon={feChevronDown}
 								class="{collapsed[group.name]
-									? 'rotate-180'
-									: ''} m-auto h-4 w-4 text-slate-600 transition-transform"
+									? ''
+									: 'rotate-180'} m-auto h-4 w-4 text-slate-600 transition-transform"
 							/>
 						</button>
 					</div>

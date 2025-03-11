@@ -54,7 +54,6 @@
 	} from './feather.js';
 	import { defaultToolSchema } from './tools.js';
 	import { debounce, readFileAsDataURL } from './util.js';
-	import FilePreview from './FilePreview.svelte';
 	import { flash } from './actions';
 	import Message from './Message.svelte';
 	import { deleteSingleItem, initEncryption, sendSingleItem, syncPull, syncPush } from './sync.js';
@@ -413,6 +412,8 @@
 
 	let thinkingStartTime = null;
 	let thinkingInterval = null;
+
+	let tree;
 
 	function handleAbort() {
 		if (!generating) {
@@ -1052,6 +1053,19 @@
 
 		initializePWAStyles();
 
+		try {
+			tree = await (
+				await fetch(`${$remoteServer.address}/list_directory`, {
+					method: 'GET',
+					headers: {
+						Authorization: `Basic ${$remoteServer.password}`,
+					},
+				})
+			).json();
+		} catch (error) {
+			console.error(error);
+		}
+
 		loading = true;
 		models = await fetchModels({
 			onFinally: () => {
@@ -1087,6 +1101,9 @@
 			}
 		}
 	}
+
+	let savedTime = 0;
+	let video;
 </script>
 
 <svelte:window
@@ -1103,6 +1120,25 @@
 		}
 	}}
 />
+
+{#if generating && new URLSearchParams(window.location.search).get('mode') === 'vibe'}
+	<video
+		transition:fade={{ duration: 1000 }}
+		src="/peace.mp4"
+		class="fixed left-0 top-0 z-[1000] h-screen w-screen object-cover"
+		autoplay
+		loop
+		bind:this={video}
+		on:timeupdate={() => {
+      savedTime = video.currentTime;
+    }}
+		on:loadeddata={() => {
+      if (savedTime > 0) {
+        video.currentTime = savedTime;
+      }
+    }}
+	/>
+{/if}
 
 <main class="flex h-dvh w-screen flex-col">
 	<div class="flex h-12 items-center gap-1 px-2 py-1 md:hidden">
@@ -1373,6 +1409,7 @@
 						{submitCompletion}
 						{scrollToBottom}
 						{handleAbort}
+						{tree}
 						bind:inputTextareaEl
 						bind:handleFileDrop
 					/>

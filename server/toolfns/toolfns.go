@@ -14,7 +14,8 @@ var ToolGroups []*Group
 func init() {
 	ToolGroups = []*Group{
 		NewGroup("System",
-			Shell,
+			executor.Shell,
+			//Shell,
 		),
 	}
 }

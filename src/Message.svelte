@@ -304,7 +304,7 @@
 										/>
 										{#if contentHeight > 400}
 											<button
-												class="sticky z-10 bottom-4 left-1/2 flex translate-x-[calc(-50%+32px)] items-center gap-x-1.5 self-start rounded-full bg-gray-200 px-3.5 py-2 text-left text-xs transition-colors hover:bg-gray-300"
+												class="sticky z-10 bottom-2 left-1/2 flex translate-x-[calc(-50%+40px)] items-center gap-x-1.5 self-start rounded-full bg-gray-200 px-3.5 py-2 text-left text-xs transition-colors hover:bg-gray-300"
 												on:click={() => {
 													message.thoughtsExpanded = !message.thoughtsExpanded;
 													saveMessage(message);

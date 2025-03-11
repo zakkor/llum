@@ -22,7 +22,7 @@ import {
 	MarkdownBlockKatex,
 } from './components';
 
-import { Lexer, type TokensList } from 'marked';
+import { Lexer } from './marked.esm.js';
 import Slugger from 'github-slugger';
 
 export type MarkdownOptions = {
@@ -40,7 +40,7 @@ export type MarkdownOptions = {
 	slugger: Slugger;
 };
 
-export function parse(src: string): TokensList {
+export function parse(src: string) {
 	const lexer = new Lexer();
 	return lexer.lex(src);
 }

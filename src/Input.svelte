@@ -1,6 +1,5 @@
 <script>
 	import { fly } from 'svelte/transition';
-	import FilePreview from './FilePreview.svelte';
 	import Icon from './Icon.svelte';
 	import {
 		feArrowUp,
@@ -11,16 +10,19 @@
 		feUsers,
 		feTool,
 		feSearch,
+		feFolder,
 	} from './feather.js';
 	import { afterUpdate, tick } from 'svelte';
 	import { get } from 'svelte/store';
 	import { v4 as uuidv4 } from 'uuid';
 	import { readFileAsDataURL } from './util.js';
-	import { anthropicAPIKey, controller, params } from './stores.js';
+	import { anthropicAPIKey, controller, params, remoteServer } from './stores.js';
 	import ToolPill from './ToolPill.svelte';
 	import ToolDropdown from './ToolDropdown.svelte';
 	import ModelSelector from './ModelSelector.svelte';
 	import ReasoningEffortRangeDropdown from './ReasoningEffortRangeDropdown.svelte';
+	import FilesDropdown from '$src/FilesDropdown.svelte';
+	import FilePill from '$src/FilePill.svelte';
 
 	const imageUrlRegex = /https?:\/\/[^\s]+?\.(png|jpe?g)(?=\s|$)/gi;
 
@@ -31,11 +33,14 @@
 	export let submitCompletion;
 	export let scrollToBottom;
 	export let handleAbort;
+	export let tree;
 
 	let content = '';
 	let pendingImages = [];
 	let imageUrlsBlacklist = [];
 	let pendingFiles = [];
+	let selectedFiles = [];
+	$: console.log(`selectedFiles:`, selectedFiles);
 
 	let isHoveringSend = false;
 	let tokenCount = null;
@@ -56,7 +61,7 @@
 			let fileContent = '';
 			if (pendingFiles.length > 0) {
 				for (const file of pendingFiles) {
-					fileContent += `\`\`\`filename="${file.name}"\n${file.text}\n\`\`\`\n\n`;
+					fileContent += `\`\`\`filepath="${file.path}"\n${file.contents}\n\`\`\`\n\n`;
 				}
 			}
 
@@ -100,6 +105,7 @@
 	}
 
 	let toolsOpen = false;
+	let filesOpen = false;
 	let reasoningEffortDropdownOpen = false;
 	let websearchEnabled = false;
 
@@ -146,8 +152,8 @@
 			let fileContent = '';
 			if (pendingFiles.length > 0) {
 				for (const file of pendingFiles) {
-					fileContent += `\`\`\`filename="${file.name}"
-${file.text}
+					fileContent += `\`\`\`filepath="${file.path}"
+${file.contents}
 \`\`\`
 
 `;
@@ -168,6 +174,7 @@ ${file.text}
 			pendingImages = [];
 			imageUrlsBlacklist = [];
 			pendingFiles = [];
+			selectedFiles = [];
 
 			await tick();
 			if (innerWidth < 880) {
@@ -198,16 +205,16 @@ ${file.text}
 
 			const arrayBuffer = await file.arrayBuffer();
 			const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-			let text = '';
+			let contents = '';
 
 			for (let i = 1; i <= pdf.numPages; i++) {
 				const page = await pdf.getPage(i);
 				const content = await page.getTextContent();
 				const pageText = content.items.map((item) => item.str).join(' ');
-				text += pageText;
+				contents += pageText;
 			}
 
-			pendingFiles.push({ name: file.name, text });
+			pendingFiles.push({ path: file.name, contents });
 			pendingFiles = pendingFiles;
 			tick().then(() => {
 				autoresizeTextarea();
@@ -251,7 +258,7 @@ ${file.text}
 		for (let i = 0; i < texts.length; i++) {
 			const text = texts[i];
 			const filename = filenames[i];
-			pendingFiles.push({ name: filename, text: text });
+			pendingFiles.push({ path: filename, contents: text });
 			pendingFiles = pendingFiles;
 		}
 
@@ -292,7 +299,7 @@ ${file.text}
 				handlePDF(file);
 			} else {
 				const text = await file.text();
-				pendingFiles.push({ name: file.name, text });
+				pendingFiles.push({ path: file.name, contents: text });
 				pendingFiles = pendingFiles;
 				tick().then(() => {
 					autoresizeTextarea();
@@ -344,27 +351,18 @@ ${file.text}
 			{#if pendingImages.length > 0 || pendingFiles.length > 0}
 				<div class="absolute left-5 top-2.5 flex gap-x-3">
 					{#each pendingFiles as file, i}
-						<div class="relative">
-							<FilePreview
-								filename={file.name}
-								class="my-auto !gap-1 whitespace-pre-wrap px-4 text-center [overflow-wrap:anywhere]"
-								outerClass="!gap-1 h-20 w-20"
-								filenameClass="!text-[10px] !leading-relaxed line-clamp-2"
-								badgeClass="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2"
-							/>
-							<button
-								on:click={() => {
-									pendingFiles.splice(i, 1);
-									pendingFiles = pendingFiles;
-									tick().then(() => {
-										autoresizeTextarea();
-									});
-								}}
-								class="absolute -bottom-1 -right-1 flex h-4 w-4 rounded-full bg-black transition-[transform,background-color] hover:scale-110 hover:bg-red-400"
-							>
-								<Icon icon={feX} class="m-auto h-3 w-3 text-white" />
-							</button>
-						</div>
+						<FilePill
+							{file}
+							canDelete
+							on:delete={() => {
+								const [deleted] = pendingFiles.splice(i, 1);
+								pendingFiles = pendingFiles;
+								selectedFiles = selectedFiles.filter((f) => f !== deleted.path);
+								tick().then(() => {
+									autoresizeTextarea();
+								});
+							}}
+						/>
 					{/each}
 					{#each pendingImages as image, i}
 						<div class="relative">
@@ -404,10 +402,11 @@ ${file.text}
 			{/if}
 			<textarea
 				bind:this={inputTextareaEl}
-				class="{isMultimodal ? 'pr-[84px]' : 'pr-14'} {pendingImages.length > 0 ||
-				pendingFiles.length > 0
+				class="{isMultimodal ? 'pr-[84px]' : 'pr-14'} {pendingImages.length > 0
 					? '!pt-[112px]'
-					: ''} max-h-[90dvh] w-full resize-none rounded-[18px] border border-slate-200 pb-14 pl-5 pt-4 font-normal text-slate-800 shadow-sm transition-colors scrollbar-slim focus:border-slate-300 focus:outline-none"
+					: pendingFiles.length > 0
+						? '!pt-[48px]'
+						: ''} max-h-[90dvh] w-full resize-none rounded-[18px] border border-slate-200 pb-14 pl-5 pt-4 font-normal text-slate-800 shadow-sm transition-colors scrollbar-slim focus:border-slate-300 focus:outline-none"
 				rows={1}
 				bind:value={content}
 				on:paste={handlePaste}
@@ -468,6 +467,46 @@ ${file.text}
 							{/if}
 						</ToolPill>
 						<ToolDropdown bind:open={toolsOpen} {convo} {saveConversation} />
+					</div>
+
+					<div id="files-dropdown" class="contents">
+						<ToolPill
+							icon={feFolder}
+							selected={filesOpen}
+							on:click={() => (filesOpen = !filesOpen)}
+						>
+							Files
+							{#if pendingFiles.length > 0}
+								<span
+									class="{filesOpen
+										? 'bg-white text-slate-800'
+										: 'bg-slate-800 text-white'} flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] transition-colors"
+								>
+									{pendingFiles.length}
+								</span>
+							{/if}
+						</ToolPill>
+						<FilesDropdown
+							bind:open={filesOpen}
+							{tree}
+							bind:selectedFiles
+							on:fileSelected={async ({ detail }) => {
+								const path = detail.path;
+								const response = await fetch(`${$remoteServer.address}/read_file?path=${path}`);
+								const contents = await response.text();
+								pendingFiles = [...pendingFiles, { path, contents }];
+								tick().then(() => {
+									autoresizeTextarea();
+								});
+							}}
+							on:fileDeselected={({ detail }) => {
+								const path = detail.path;
+								pendingFiles = pendingFiles.filter((f) => f.path !== path);
+								tick().then(() => {
+									autoresizeTextarea();
+								});
+							}}
+						/>
 					</div>
 
 					{#if convo.models.every((m) => m.provider === 'OpenRouter')}

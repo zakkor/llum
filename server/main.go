@@ -21,7 +21,8 @@ import (
 )
 
 var (
-	password = flag.String("password", "", "Password for basic auth.")
+	password  = flag.String("password", "", "Password for basic auth.")
+	filesPath = flag.String("files", ".", "Path to the directory we're working with")
 )
 
 func main() {
@@ -42,6 +43,9 @@ func main() {
 	th := &ToolHandler{Groups: toolfns.ToolGroups}
 	r.Get("/tool_schema", th.ToolSchema)
 	r.Post("/tool", th.InvokeTool)
+
+	r.Get("/list_directory", ListDirectory)
+	r.Get("/read_file", ReadFile)
 
 	fmt.Println("Tool server running at http://localhost:8081")
 	httpServer := &http.Server{Addr: ":8081", Handler: r}
