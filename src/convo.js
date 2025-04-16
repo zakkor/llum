@@ -72,12 +72,19 @@ export async function complete(convo, onupdate, onabort) {
 						param.reasoningEffort['range'] > 0)
 						? undefined
 						: param.temperature,
-				max_tokens:
-					param.maxTokens != null && param.maxTokens > 0
-						? param.maxTokens
-						: model.provider === 'Anthropic'
-							? model.maxTokensDefault || 4096
-							: undefined,
+				...(model.provider === 'OpenAI' && model.id === 'o4-mini'
+					? {
+							max_completion_tokens:
+								param.maxTokens != null && param.maxTokens > 0 ? param.maxTokens : undefined,
+						}
+					: {
+							max_tokens:
+								param.maxTokens != null && param.maxTokens > 0
+									? param.maxTokens
+									: model.provider === 'Anthropic'
+										? model.maxTokensDefault || 4096
+										: undefined,
+						}),
 				tools: activeSchema.length > 0 ? activeSchema : undefined,
 				system,
 				messages,
@@ -93,11 +100,11 @@ export async function complete(convo, onupdate, onabort) {
 						: undefined,
 				reasoning_effort:
 					model.provider === 'OpenAI' && model.reasoningEffortControls === 'low-medium-high'
-						? convo.reasoningEffort || 'medium'
+						? convo.reasoningEffort || 'high'
 						: undefined,
 				...(model.provider === 'OpenRouter' && model.kind === 'reasoner'
 					? model.reasoningEffortControls === 'low-medium-high'
-						? { reasoning: { effort: param.reasoningEffort['low-medium-high'] || 'medium' } }
+						? { reasoning: { effort: param.reasoningEffort['low-medium-high'] || 'high' } }
 						: model.reasoningEffortControls === 'range' && param.reasoningEffort['range'] > 0
 							? {
 									reasoning: {

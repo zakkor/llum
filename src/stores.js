@@ -10,7 +10,7 @@ export const params = persisted('params', {
 	maxTokens: 0,
 	messagesContextLimit: 0,
 	reasoningEffort: {
-		'low-medium-high': 'medium',
+		'low-medium-high': 'high',
 		range: 64000,
 	},
 });

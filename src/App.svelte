@@ -1019,7 +1019,7 @@
 		}
 		if ($params.reasoningEffort == null) {
 			$params.reasoningEffort = {
-				'low-medium-high': 'medium',
+				'low-medium-high': 'high',
 				range: 64000,
 			};
 		}
