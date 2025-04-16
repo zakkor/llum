@@ -347,9 +347,11 @@ export const priorityOrder = [
 	{
 		exactly: [
 			'openai/o3-mini',
+			'openai/o1-pro',
 			'openai/o1',
 			'openai/o1-preview',
 			'openai/o1-mini',
+			'openai/gpt-4.5-preview',
 			'openai/gpt-4-turbo',
 			'openai/chatgpt-4o-latest',
 			'openai/gpt-4o',
@@ -359,9 +361,11 @@ export const priorityOrder = [
 	{
 		exactly: [
 			'o3-mini',
+			'o1-pro',
 			'o1',
 			'o1-preview',
 			'o1-mini',
+			'gpt-4.5-preview',
 			'gpt-4o',
 			'gpt-4o-mini',
 			'gpt-4-turbo',
