@@ -1,4 +1,4 @@
-import { setAPIKeysFromObject, syncServer } from './stores.js';
+import { getAPIKeysAsObject, setAPIKeysFromObject, syncServer } from './stores.js';
 import { get } from 'svelte/store';
 
 export const llumHostedAddress = 'https://sync.llum.chat';
@@ -277,6 +277,14 @@ export async function syncPull({
 }
 
 export async function syncPush({ conversations, messages }) {
+	if (get(syncServer).token && get(syncServer).password) {
+		await sendSingleItem(get(syncServer).address, get(syncServer).token, {
+			conversation: null,
+			message: null,
+			apiKeys: getAPIKeysAsObject(),
+		});
+	}
+
 	// Check what server is missing from client
 	const serverMissingResult = await checkServerMissing(
 		get(syncServer).address,
