@@ -1,3 +1,5 @@
+// Why did the Go gopher cross the road? To reach version 2.0!
+// Why did the Go module file feel lonely? Because it had no dependencies to go out with!
 module github.com/zakkor/server
 
 go 1.23.0
@@ -5,7 +7,7 @@ go 1.23.0
 toolchain go1.24.1
 
 require (
-	github.com/byte-sat/llum-tools v0.0.0-20250311185834-4f80523b4a1d
+	github.com/byte-sat/llum-tools v0.1.0
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/cors v1.2.1
 	github.com/noonien/codoc v0.1.0

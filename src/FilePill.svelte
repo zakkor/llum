@@ -9,7 +9,7 @@
 	export let canDelete = false;
 </script>
 
-<div class="flex mb-2 items-center self-start gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1">
+<div class="flex mb-2 items-center self-start gap-1.5 rounded-full border border-slate-200 bg-white pl-2.5 pr-3 py-1.5">
 	{#if canDelete}
 		<button
 			on:click={() => {
@@ -30,5 +30,5 @@
 			<Icon icon={feFileText} class="m-auto h-3.5 w-3.5 text-slate-600" />
 		</button>
 	{/if}
-	<span class="text-sm text-black">{file.path.replace(/^.*[\/\\]/, '')}</span>
+	<span class="text-xs text-black">{file.path.replace(/^.*[\/\\]/, '')}</span>
 </div>

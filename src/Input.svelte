@@ -343,7 +343,21 @@ ${file.contents}
 	});
 </script>
 
-<svelte:window on:resize={updateFades} />
+<svelte:window
+	on:resize={updateFades}
+	on:keydown={(event) => {
+		// Check for Command+P (macOS) or Ctrl+P (Windows/Linux) to open the file picker
+		if (navigator.platform.match(/Mac|iPhone|iPod|iPad/)) {
+			if (event.metaKey && event.key === 'p') {
+				filesOpen = true;
+				event.preventDefault();
+			}
+		} else if (event.ctrlKey && event.key === 'p') {
+			filesOpen = true;
+			event.preventDefault();
+		}
+	}}
+/>
 
 <div class="input-floating absolute bottom-4 left-1/2 z-[99] w-full -translate-x-1/2 px-5 ld:px-8">
 	<div class="mx-auto flex w-full max-w-[680px] flex-col ld:max-w-[768px]">
@@ -469,45 +483,47 @@ ${file.contents}
 						<ToolDropdown bind:open={toolsOpen} {convo} {saveConversation} />
 					</div>
 
-					<div id="files-dropdown" class="contents">
-						<ToolPill
-							icon={feFolder}
-							selected={filesOpen}
-							on:click={() => (filesOpen = !filesOpen)}
-						>
-							Files
-							{#if pendingFiles.length > 0}
-								<span
-									class="{filesOpen
-										? 'bg-white text-slate-800'
-										: 'bg-slate-800 text-white'} flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] transition-colors"
-								>
-									{pendingFiles.length}
-								</span>
-							{/if}
-						</ToolPill>
-						<FilesDropdown
-							bind:open={filesOpen}
-							{tree}
-							bind:selectedFiles
-							on:fileSelected={async ({ detail }) => {
-								const path = detail.path;
-								const response = await fetch(`${$remoteServer.address}/read_file?path=${path}`);
-								const contents = await response.text();
-								pendingFiles = [...pendingFiles, { path, contents }];
-								tick().then(() => {
-									autoresizeTextarea();
-								});
-							}}
-							on:fileDeselected={({ detail }) => {
-								const path = detail.path;
-								pendingFiles = pendingFiles.filter((f) => f.path !== path);
-								tick().then(() => {
-									autoresizeTextarea();
-								});
-							}}
-						/>
-					</div>
+					{#if tree}
+						<div id="files-dropdown" class="contents">
+							<ToolPill
+								icon={feFolder}
+								selected={filesOpen}
+								on:click={() => (filesOpen = !filesOpen)}
+							>
+								Files
+								{#if pendingFiles.length > 0}
+									<span
+										class="{filesOpen
+											? 'bg-white text-slate-800'
+											: 'bg-slate-800 text-white'} flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] transition-colors"
+									>
+										{pendingFiles.length}
+									</span>
+								{/if}
+							</ToolPill>
+							<FilesDropdown
+								bind:open={filesOpen}
+								{tree}
+								bind:selectedFiles
+								on:fileSelected={async ({ detail }) => {
+									const path = detail.path;
+									const response = await fetch(`${$remoteServer.address}/read_file?path=${path}`);
+									const contents = await response.text();
+									pendingFiles = [...pendingFiles, { path, contents }];
+									tick().then(() => {
+										autoresizeTextarea();
+									});
+								}}
+								on:fileDeselected={({ detail }) => {
+									const path = detail.path;
+									pendingFiles = pendingFiles.filter((f) => f.path !== path);
+									tick().then(() => {
+										autoresizeTextarea();
+									});
+								}}
+							/>
+						</div>
+					{/if}
 
 					{#if convo.models.every((m) => m.provider === 'OpenRouter')}
 						<ToolPill
