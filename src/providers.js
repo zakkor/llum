@@ -164,17 +164,20 @@ const capabilities = {
 			id === 'chatgpt-4o-latest' ||
 			id.startsWith('gpt-4o') ||
 			(id.startsWith('gpt-4-turbo') && id !== 'gpt-4-turbo-preview') ||
+			id === 'o3' ||
+			id.startsWith('o4-mini') ||
 			((id.startsWith('o1') || id.startsWith('o3-mini')) &&
 				!id.startsWith('o1-mini') &&
 				!id.startsWith('o1-preview')),
 
-		isReasoner: (id) => id.startsWith('o1') || id.startsWith('o3'),
+		isReasoner: (id) => id.startsWith('o1') || id.startsWith('o3') || id.startsWith('o4'),
 
 		isImageGenerator: (id) => ['dall-e-3'].includes(id),
 
 		reasoningEffortControls: (id) =>
 			(!id.startsWith('o1-preview') && !id.startsWith('o1-mini') && id.startsWith('o1')) ||
-			id.startsWith('o3-mini')
+			id.startsWith('o3') ||
+			id.startsWith('o4')
 				? 'low-medium-high'
 				: undefined,
 	},
@@ -346,10 +349,14 @@ export const priorityOrder = [
 	{ exactly: ['deepseek/deepseek-r1', 'deepseek/deepseek-chat'] },
 	{
 		exactly: [
+			'openai/o4-mini',
+			'openai/o3',
 			'openai/o3-mini',
+			'openai/o1-pro',
 			'openai/o1',
 			'openai/o1-preview',
 			'openai/o1-mini',
+			'openai/gpt-4.5-preview',
 			'openai/gpt-4-turbo',
 			'openai/chatgpt-4o-latest',
 			'openai/gpt-4o',
@@ -358,10 +365,14 @@ export const priorityOrder = [
 	},
 	{
 		exactly: [
+			'o4-mini',
+			'o3',
 			'o3-mini',
+			'o1-pro',
 			'o1',
 			'o1-preview',
 			'o1-mini',
+			'gpt-4.5-preview',
 			'gpt-4o',
 			'gpt-4o-mini',
 			'gpt-4-turbo',

@@ -551,10 +551,10 @@ ${file.contents}
 								if (convo.reasoningEffort === 'low') {
 									convo.reasoningEffort = 'medium';
 									saveConversation(convo);
-								} else if (!convo.reasoningEffort || convo.reasoningEffort === 'medium') {
+								} else if (convo.reasoningEffort === 'medium') {
 									convo.reasoningEffort = 'high';
 									saveConversation(convo);
-								} else if (convo.reasoningEffort === 'high') {
+								} else if (!convo.reasoningEffort || convo.reasoningEffort === 'high') {
 									convo.reasoningEffort = 'low';
 									saveConversation(convo);
 								}
@@ -562,9 +562,9 @@ ${file.contents}
 						>
 							{#if convo.reasoningEffort === 'low'}
 								Low
-							{:else if !convo.reasoningEffort || convo.reasoningEffort === 'medium'}
+							{:else if convo.reasoningEffort === 'medium'}
 								Medium
-							{:else}
+							{:else if !convo.reasoningEffort || convo.reasoningEffort === 'high'}
 								High
 							{/if}
 						</ToolPill>
