@@ -2,6 +2,9 @@
 	import { scale } from 'svelte/transition';
 	import { cubicIn } from 'svelte/easing';
 	import FileTreeNode from './FileTreeNode.svelte';
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
 
 	export let open = false;
 	export let tree;
@@ -14,6 +17,12 @@
 	let searchTerm = '';
 	let debouncedSearchTerm = '';
 	let debounceTimeout;
+
+	let inputEl;
+
+	$: if (open && inputEl) {
+		inputEl.focus();
+	}
 
 	// Clear all selections
 	function clearSelections() {
@@ -62,7 +71,7 @@
 		if (termIndex === termLower.length) {
 			// Score based on how much of the name matches
 			const nameRatio = termLower.length / nameLower.length;
-			return { match: true, score: 0.4 + (0.1 * nameRatio) };
+			return { match: true, score: 0.4 + 0.1 * nameRatio };
 		}
 
 		return { match: false, score: 0 };
@@ -82,9 +91,7 @@
 		}
 
 		// For directories, filter children and include if any children match or if the directory itself matches
-		const filteredChildren = node.children
-			.map(child => filterTree(child, term))
-			.filter(Boolean);
+		const filteredChildren = node.children.map((child) => filterTree(child, term)).filter(Boolean);
 
 		if (nodeMatches || filteredChildren.length > 0) {
 			// Sort children by search score if we're searching
@@ -95,7 +102,9 @@
 			return {
 				...node,
 				children: filteredChildren,
-				_searchScore: nodeMatches ? nodeScore : Math.max(...filteredChildren.map(c => c._searchScore || 0)) * 0.9
+				_searchScore: nodeMatches
+					? nodeScore
+					: Math.max(...filteredChildren.map((c) => c._searchScore || 0)) * 0.9,
 			};
 		}
 
@@ -142,11 +151,20 @@
 					</button>
 				</div>
 				<input
+					bind:this={inputEl}
 					type="text"
 					value={searchTerm}
 					on:input={updateSearch}
+					on:keydown={(event) => {
+						if (event.key === 'Enter') {
+							const firstFilteredFile = filteredTree?.children?.[0];
+							if (firstFilteredFile) {
+								dispatch('fileSelected', firstFilteredFile)
+							}
+						}
+					}}
 					placeholder="Search for files"
-					class="w-full rounded-lg border mt-2 border-slate-300 px-3 py-2 text-xs text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+					class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
 				/>
 			</div>
 			<ul class="max-h-[300px] overflow-y-auto pb-1.5 scrollbar-ultraslim">

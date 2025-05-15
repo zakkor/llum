@@ -515,6 +515,8 @@
 			return;
 		}
 
+		let unexpandedThinkingOnce = false;
+
 		const onupdate = async (chunk) => {
 			if (chunk.error) {
 				convo.messages[i].error = chunk.error.message || chunk.error;
@@ -533,7 +535,8 @@
 			if (convo.messages[i].model.id === 'o1') {
 				convo.messages[i].content = choice.message.content;
 				// Once content starts coming in, we can stop thinking
-				if (convo.messages[i].reasoning) {
+				if (convo.messages[i].reasoning && !unexpandedThinkingOnce) {
+					unexpandedThinkingOnce = true;
 					convo.messages[i].thinking = false;
 					stopThinkingTimer(i);
 				}
@@ -544,7 +547,8 @@
 			if (choice.delta.content) {
 				convo.messages[i].content += choice.delta.content;
 				// Once content starts coming in, we can stop thinking
-				if (convo.messages[i].reasoning) {
+				if (convo.messages[i].reasoning && !unexpandedThinkingOnce) {
+					unexpandedThinkingOnce = true;
 					convo.messages[i].thinking = false;
 					convo.messages[i].thoughtsExpanded = false;
 					stopThinkingTimer(i);
@@ -557,7 +561,8 @@
 				convo.messages[i].reasoning = true;
 				convo.messages[i].thoughts = '';
 				convo.messages[i].thoughtsExpanded = true;
-				if (!convo.messages[i].thinking) {
+				if (!convo.messages[i].thinking && !unexpandedThinkingOnce) {
+					unexpandedThinkingOnce = true;
 					convo.messages[i].thinking = true;
 					startThinkingTimer(i);
 				}
@@ -743,7 +748,7 @@
 			clearInterval(thinkingInterval);
 			thinkingInterval = null;
 		}
-		updateThinkingTime(messageIndex);
+		// updateThinkingTime(messageIndex);
 	}
 
 	function updateThinkingTime(messageIndex) {
@@ -1121,7 +1126,7 @@
 	}}
 />
 
-{#if generating && new URLSearchParams(window.location.search).get('mode') === 'vibe'}
+{#if generating && new URLSearchParams(window.location.search).get('vibe') === 'true'}
 	<video
 		transition:fade={{ duration: 1000 }}
 		src="/peace.mp4"
@@ -1130,13 +1135,13 @@
 		loop
 		bind:this={video}
 		on:timeupdate={() => {
-      savedTime = video.currentTime;
-    }}
+			savedTime = video.currentTime;
+		}}
 		on:loadeddata={() => {
-      if (savedTime > 0) {
-        video.currentTime = savedTime;
-      }
-    }}
+			if (savedTime > 0) {
+				video.currentTime = savedTime;
+			}
+		}}
 	/>
 {/if}
 
@@ -1508,15 +1513,5 @@
 			:where(.prose > :last-child):not(:where([class~='not-prose'], [class~='not-prose'] *))
 	) {
 		@apply mb-0;
-	}
-
-	/* Fix code copy button positioning */
-	:global(.markdown.prose p + .group\/code .code-copy-button) {
-		@apply top-7;
-	}
-
-	/* File previews spacing */
-	:global(.markdown.prose .file-preview:not(:last-of-type)) {
-		@apply mb-4;
 	}
 </style>
